@@ -143,7 +143,26 @@ Locate `get_user_or_401()` in the starter code. Rewrite it to look for a JWT ins
 4. Return the decoded `uid`. If it fails, return a `401 Unauthorized` tuple.
 
 *Test this in Postman by hitting `/login`, copying the `token`, and pasting it into the "Bearer Token" authorization tab for `GET /api/profile`.*
+tested it using powershell. decided not to use Postman:
+PS C:\Windows\system32> $token.Length
+119
+PS C:\Windows\system32> $token.Substring(0,20)
+eyJhbGciOiJSUzI1NiIs
+PS C:\Windows\system32> $resp = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/login" `
+>>   -ContentType "application/json" `
+>>   -Body (@{ email="glen3lab8@gmail.com"; password="test123" } | ConvertTo-Json)
+PS C:\Windows\system32>
+PS C:\Windows\system32> $token = $resp.token
+PS C:\Windows\system32> $token.Length
+926
+PS C:\Windows\system32> $token.Split('.').Count
+3
+PS C:\Windows\system32> Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:5000/api/profile" `
+>>   -Headers @{ Authorization = "Bearer $token" }
 
+profile                                 uid
+-------                                 ---
+@{email=glen3lab8@gmail.com; role=user} Dqi9D6KAbqPjbralTERoDkDKyRx2
 ---
 
 ## **Task 2: Implementing Device Identity (API Keys)**
