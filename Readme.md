@@ -237,3 +237,22 @@ Currently, `api_update_profile()` in the starter code handles updates, but we ne
     - `first_name` and `last_name` must not exceed 50 characters.
     - `student_id` must be exactly 8 or 9 alphanumeric characters.
 3. **Collect All Errors:** Instead of failing on the first bad field, check *all* of them. Append any errors to a list, and return a single `400 Bad Request` containing all the errors the user needs to fix at once.
+
+
+command prompt test:
+PS C:\Windows\system32> $resp = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/login" -ContentType "application/json" -Body (@{ email="glen3lab8@gmail.com"; password="test123" } | ConvertTo-Json)
+PS C:\Windows\system32> $token = $resp.token
+PS C:\Windows\system32> $badBody = @{ first_name=("g"*60); student_id="A0112"; role="admin" } | ConvertTo-Json
+PS C:\Windows\system32> try {
+>>   Invoke-RestMethod -Method Put -Uri "http://127.0.0.1:5000/api/profile" -ContentType "application/json" -Headers @{ Authorization="Bearer $token" } -Body $badBody
+>> } catch {
+>>   $_.ErrorDetails.Message
+>> }
+{
+  "errors": [
+    "Field 'role' is not allowed",
+    "first_name must be 50 characters or less",
+    "student_id must be exactly 8 or 9 alphanumeric characters"
+  ]
+}
+and from the flask command prompt: 127.0.0.1 - - [27/Feb/2026 15:40:39] "PUT /api/profile HTTP/1.1" 400 -
