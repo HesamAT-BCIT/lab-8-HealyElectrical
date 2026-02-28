@@ -144,7 +144,26 @@ Locate `get_user_or_401()` in the starter code. Rewrite it to look for a JWT ins
 4. Return the decoded `uid`. If it fails, return a `401 Unauthorized` tuple.
 
 *Test this in Postman by hitting `/login`, copying the `token`, and pasting it into the "Bearer Token" authorization tab for `GET /api/profile`.*
+tested it using powershell. decided not to use Postman:
+PS C:\Windows\system32> $token.Length
+119
+PS C:\Windows\system32> $token.Substring(0,20)
+eyJhbGciOiJSUzI1NiIs
+PS C:\Windows\system32> $resp = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/login" `
+>>   -ContentType "application/json" `
+>>   -Body (@{ email="glen3lab8@gmail.com"; password="test123" } | ConvertTo-Json)
+PS C:\Windows\system32>
+PS C:\Windows\system32> $token = $resp.token
+PS C:\Windows\system32> $token.Length
+926
+PS C:\Windows\system32> $token.Split('.').Count
+3
+PS C:\Windows\system32> Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:5000/api/profile" `
+>>   -Headers @{ Authorization = "Bearer $token" }
 
+profile                                 uid
+-------                                 ---
+@{email=glen3lab8@gmail.com; role=user} Dqi9D6KAbqPjbralTERoDkDKyRx2
 ---
 
 ## **Task 2: Implementing Device Identity (API Keys)**
@@ -219,3 +238,22 @@ Currently, `api_update_profile()` in the starter code handles updates, but we ne
     - `first_name` and `last_name` must not exceed 50 characters.
     - `student_id` must be exactly 8 or 9 alphanumeric characters.
 3. **Collect All Errors:** Instead of failing on the first bad field, check *all* of them. Append any errors to a list, and return a single `400 Bad Request` containing all the errors the user needs to fix at once.
+
+
+command prompt test:
+PS C:\Windows\system32> $resp = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/login" -ContentType "application/json" -Body (@{ email="glen3lab8@gmail.com"; password="test123" } | ConvertTo-Json)
+PS C:\Windows\system32> $token = $resp.token
+PS C:\Windows\system32> $badBody = @{ first_name=("g"*60); student_id="A0112"; role="admin" } | ConvertTo-Json
+PS C:\Windows\system32> try {
+>>   Invoke-RestMethod -Method Put -Uri "http://127.0.0.1:5000/api/profile" -ContentType "application/json" -Headers @{ Authorization="Bearer $token" } -Body $badBody
+>> } catch {
+>>   $_.ErrorDetails.Message
+>> }
+{
+  "errors": [
+    "Field 'role' is not allowed",
+    "first_name must be 50 characters or less",
+    "student_id must be exactly 8 or 9 alphanumeric characters"
+  ]
+}
+and from the flask command prompt: 127.0.0.1 - - [27/Feb/2026 15:40:39] "PUT /api/profile HTTP/1.1" 400 -
